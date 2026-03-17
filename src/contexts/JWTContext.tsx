@@ -109,6 +109,15 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
             const normalizedUser = normalizeUserData(user);
             ChangeDirection(normalizedUser.lang_pref ?? 'en');
 
+            // Persist company_code so axios and other services can send it automatically
+            try {
+              if (normalizedUser.company_code) {
+                window.localStorage.setItem('company_code', normalizedUser.company_code);
+              }
+            } catch (e) {
+              // ignore storage errors
+            }
+
             // Extract tenantId from JWT token
             const decoded: KeyedObject = jwtDecode(serviceToken);
             const tenantId = decoded.tenantId;
@@ -168,6 +177,13 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
       // Normalize user data from uppercase to lowercase
       const normalizedUser = normalizeUserData(user);
       ChangeDirection(normalizedUser.lang_pref ?? 'en');
+      try {
+        if (normalizedUser.company_code) {
+          window.localStorage.setItem('company_code', normalizedUser.company_code);
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
       
       // Add tenantId to user object
       const userWithTenant = {
@@ -217,6 +233,9 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
   };
 
   const logout = () => {
+    try {
+      window.localStorage.removeItem('company_code');
+    } catch (e) {}
     setSession(null);
     dispatch({ type: LOGOUT });
   };
