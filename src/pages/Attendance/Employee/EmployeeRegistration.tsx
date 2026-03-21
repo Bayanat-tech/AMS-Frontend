@@ -1,9 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button, Card, Form, Input, DatePicker, Row, Col, Modal, Typography, Steps, Progress, message, Tag, Checkbox } from 'antd';
-import { CameraOutlined, DeleteOutlined, ArrowLeftOutlined, ArrowRightOutlined, CheckCircleOutlined, SoundOutlined, AudioMutedOutlined } from '@ant-design/icons';
+import {
+  CameraOutlined,
+  DeleteOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  CheckCircleOutlined,
+  SoundOutlined,
+  AudioMutedOutlined
+} from '@ant-design/icons';
 import Webcam from 'react-webcam';
 import dayjs from 'dayjs';
 import attendanceServiceInstance from 'service/Attendance/Service.attendance';
+import useAuth from 'hooks/useAuth';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -18,6 +27,8 @@ const EmployeeRegistration = ({
   existingData?: any;
 }) => {
   const [form] = Form.useForm();
+  const { user } = useAuth();
+  const companyCode = user?.company_code?.toUpperCase() || localStorage.getItem('company_code')?.toUpperCase() || '';
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -30,13 +41,13 @@ const EmployeeRegistration = ({
   const [autoCaptureInterval, setAutoCaptureInterval] = useState<NodeJS.Timeout | null>(null);
   const [countdown, setCountdown] = useState<number>(0);
   const [faceAngles, setFaceAngles] = useState<string[]>([]);
-  const [ setDebugInfo] = useState<any | null>(null);
+  const [setDebugInfo] = useState<any | null>(null);
 
   // Employee profile returned from API
   const [employeeProfile, setEmployeeProfile] = useState<any | null>(null);
   const [validateLoading, setValidateLoading] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
-  const [isBTIndia, setIsBTIndia] = useState(false);
+  //const [isBTIndia, setIsBTIndia] = useState(false);
   const [manualEntry, setManualEntry] = useState(false);
 
   // Initialize speech synthesis
@@ -50,33 +61,34 @@ const EmployeeRegistration = ({
   }, []);
 
   // Voice feedback function
-  const speak = useCallback((text: string) => {
-    if (!isVoiceEnabled || !speechSynthRef.current) return;
+  const speak = useCallback(
+    (text: string) => {
+      if (!isVoiceEnabled || !speechSynthRef.current) return;
 
-    speechSynthRef.current.cancel();
+      speechSynthRef.current.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
 
-    const voices = speechSynthRef.current.getVoices();
-    const femaleVoice = voices.find(voice =>
-      voice.name.includes('Female') ||
-      voice.name.includes('Karen') ||
-      voice.name.includes('Samantha')
-    );
+      const voices = speechSynthRef.current.getVoices();
+      const femaleVoice = voices.find(
+        (voice) => voice.name.includes('Female') || voice.name.includes('Karen') || voice.name.includes('Samantha')
+      );
 
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
-    }
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
 
-    speechSynthRef.current.speak(utterance);
-  }, [isVoiceEnabled]);
+      speechSynthRef.current.speak(utterance);
+    },
+    [isVoiceEnabled]
+  );
 
   // Toggle voice feature
   const toggleVoice = useCallback(() => {
-    setIsVoiceEnabled(prev => !prev);
+    setIsVoiceEnabled((prev) => !prev);
     if (!isVoiceEnabled) {
       speak('Voice guidance enabled');
     }
@@ -209,7 +221,9 @@ const EmployeeRegistration = ({
               if (imageMirrored) ratio = 1 - ratio;
 
               console.debug('face-api detect:', { leftEyeX, rightEyeX, noseX, imageMirrored, normalized, ratio });
-              try { setDebugInfo({ leftEyeX, rightEyeX, noseX, imageMirrored, normalized, ratio }); } catch (e) { }
+              try {
+                setDebugInfo({ leftEyeX, rightEyeX, noseX, imageMirrored, normalized, ratio });
+              } catch (e) {}
 
               const NORM_THRESHOLD = 0.07;
               const RATIO_LEFT = 0.44;
@@ -224,7 +238,9 @@ const EmployeeRegistration = ({
                 result = 'left';
               }
 
-              try { setDebugInfo({ leftEyeX, rightEyeX, noseX, imageMirrored, normalized, ratio, detectedAngle: result }); } catch (e) { }
+              try {
+                setDebugInfo({ leftEyeX, rightEyeX, noseX, imageMirrored, normalized, ratio, detectedAngle: result });
+              } catch (e) {}
               resolve(result);
             } catch (e) {
               brightnessFallback();
@@ -255,7 +271,7 @@ const EmployeeRegistration = ({
         phone_number: existingData.phone_number || existingData.MOBILE_NO || '',
         department: existingData.department || existingData.DEPT_NAME || '',
         position: existingData.position || existingData.DESG_NAME || existingData.DESG_CODE || '',
-        hire_date: existingData.hire_date ? dayjs(existingData.hire_date) : existingData.JOIN_DATE ? dayjs(existingData.JOIN_DATE) : null,
+        hire_date: existingData.hire_date ? dayjs(existingData.hire_date) : existingData.JOIN_DATE ? dayjs(existingData.JOIN_DATE) : null
       };
       form.setFieldsValue(formattedData);
       if (existingData.EMPLOYEE_CODE || existingData.RPT_NAME) {
@@ -276,7 +292,7 @@ const EmployeeRegistration = ({
     speak('Starting automatic face capture. Please position your face in the frame.');
 
     const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
           startCaptureSequence();
@@ -306,7 +322,7 @@ const EmployeeRegistration = ({
         }
 
         const countdownInterval = setInterval(() => {
-          setCountdown(prev => {
+          setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(countdownInterval);
 
@@ -314,8 +330,7 @@ const EmployeeRegistration = ({
                 try {
                   const ok = await capturePhoto();
                   if (ok) captureCount++;
-                } catch (e) {
-                }
+                } catch (e) {}
 
                 if (captureCount < 3) {
                   setTimeout(captureNext, 500);
@@ -350,11 +365,13 @@ const EmployeeRegistration = ({
     }
     try {
       const detectedAngle = await detectFaceAngle(imageSrc);
-      const expectedAngle = captureInstruction; 
+      const expectedAngle = captureInstruction;
 
       console.debug('capture check:', { expectedAngle, detectedAngle });
       if (process.env.NODE_ENV !== 'production') {
-        try { message.info(`Detected: ${detectedAngle} · Expected: ${expectedAngle}`, 1.2); } catch (e) { }
+        try {
+          message.info(`Detected: ${detectedAngle} · Expected: ${expectedAngle}`, 1.2);
+        } catch (e) {}
       }
 
       if (detectedAngle !== expectedAngle) {
@@ -451,11 +468,26 @@ const EmployeeRegistration = ({
       setValidationStatus('validating');
       speak('Validating employee code. Please wait.');
 
+      // let data;
+      // if (isBTIndia) {
+      //   data = await attendanceServiceInstance.getEmployeeInfobt(code);
+      // } else {
+      //   data = await attendanceServiceInstance.getEmployeeInfo(code);
+      // }
+
+      if (!companyCode) {
+        message.error('Session expired. Please login again.');
+        speak('Session expired. Please login again.');
+        return;
+      }
+
       let data;
-      if (isBTIndia) {
-        data = await attendanceServiceInstance.getEmployeeInfobt(code);
-      } else {
-        data = await attendanceServiceInstance.getEmployeeInfo(code);
+      switch (companyCode) {
+        case 'BTIND':
+          data = await attendanceServiceInstance.getEmployeeInfobt(code);
+          break;
+        default:
+          data = await attendanceServiceInstance.getEmployeeInfo(code);
       }
 
       if (Array.isArray(data)) {
@@ -485,7 +517,7 @@ const EmployeeRegistration = ({
         phone_number: data.MOBILE_NO || '',
         department: data.DEPT_NAME || data.SECTION_NAME || '',
         position: data.DESG_NAME || data.DESG_CODE || '',
-        hire_date: data.JOIN_DATE ? dayjs(data.JOIN_DATE) : null,
+        hire_date: data.JOIN_DATE ? dayjs(data.JOIN_DATE) : null
       };
 
       form.setFieldsValue(formData);
@@ -500,7 +532,6 @@ const EmployeeRegistration = ({
           handleStepChange('next');
         }
       }, 500);
-
     } catch (error: any) {
       console.error('Validate error:', error);
       setEmployeeProfile(null);
@@ -514,7 +545,7 @@ const EmployeeRegistration = ({
 
   const handleEmployeeCodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     if (manualEntry) return; // Skip auto-validation in manual mode
-    
+
     const code = e.target.value?.trim();
     if (code && code.length > 3 && !employeeProfile && validationStatus !== 'success') {
       setTimeout(() => {
@@ -548,10 +579,7 @@ const EmployeeRegistration = ({
     }
 
     try {
-      const stepFields =
-        currentStep === 0 ? ['employee_code', 'full_name', 'employee_id'] :
-          currentStep === 1 ? ['hire_date'] :
-            [];
+      const stepFields = currentStep === 0 ? ['employee_code', 'full_name', 'employee_id'] : currentStep === 1 ? ['hire_date'] : [];
 
       if (stepFields.length > 0) {
         await form.validateFields(stepFields);
@@ -743,11 +771,16 @@ const EmployeeRegistration = ({
     }
 
     switch (captureInstruction) {
-      case 'center': return '📸 Look straight at the camera';
-      case 'right': return '👉 Turn your head to the right';
-      case 'left': return '👈 Turn your head to the left';
-      case 'done': return '✅ All images captured!';
-      default: return 'Position your face in the frame';
+      case 'center':
+        return '📸 Look straight at the camera';
+      case 'right':
+        return '👉 Turn your head to the right';
+      case 'left':
+        return '👈 Turn your head to the left';
+      case 'done':
+        return '✅ All images captured!';
+      default:
+        return 'Position your face in the frame';
     }
   };
 
@@ -762,17 +795,14 @@ const EmployeeRegistration = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
                 <Text strong>Manual Entry Mode: </Text>
-                <Checkbox
-                  checked={manualEntry}
-                  onChange={(e) => handleManualEntryToggle(e.target.checked)}
-                >
+                <Checkbox checked={manualEntry} onChange={(e) => handleManualEntryToggle(e.target.checked)}>
                   Enable Manual Entry
                 </Checkbox>
               </div>
               <Button
                 onClick={toggleVoice}
                 icon={isVoiceEnabled ? <SoundOutlined /> : <AudioMutedOutlined />}
-                type={isVoiceEnabled ? "primary" : "default"}
+                type={isVoiceEnabled ? 'primary' : 'default'}
                 size="small"
               >
                 {isVoiceEnabled ? 'Voice On' : 'Voice Off'}
@@ -784,10 +814,13 @@ const EmployeeRegistration = ({
               <Card
                 style={{
                   marginBottom: 16,
-                  background: validationStatus === 'success' ? '#f6ffed' :
-                    validationStatus === 'error' ? '#fff2f0' : '#fafafa',
-                  border: validationStatus === 'success' ? '1px solid #b7eb8f' :
-                    validationStatus === 'error' ? '1px solid #ffccc7' : '1px solid #d9d9d9'
+                  background: validationStatus === 'success' ? '#f6ffed' : validationStatus === 'error' ? '#fff2f0' : '#fafafa',
+                  border:
+                    validationStatus === 'success'
+                      ? '1px solid #b7eb8f'
+                      : validationStatus === 'error'
+                      ? '1px solid #ffccc7'
+                      : '1px solid #d9d9d9'
                 }}
               >
                 <Row gutter={16} align="middle">
@@ -806,12 +839,7 @@ const EmployeeRegistration = ({
                           rules={[{ required: true, message: 'Please input Employee Code!' }]}
                           style={{ flex: 1, margin: 0, minWidth: 0 }}
                         >
-                          <Input
-                            size="large"
-                            placeholder="Enter employee code"
-                            onBlur={handleEmployeeCodeBlur}
-                            disabled={!!existingData}
-                          />
+                          <Input size="large" placeholder="Enter employee code" onBlur={handleEmployeeCodeBlur} disabled={!!existingData} />
                         </Form.Item>
 
                         <Button
@@ -829,7 +857,7 @@ const EmployeeRegistration = ({
                           {validationStatus === 'success' ? 'Validated' : 'Validate'}
                         </Button>
 
-                        <div
+                        {/* <div
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -842,7 +870,7 @@ const EmployeeRegistration = ({
                             onChange={(e) => setIsBTIndia(e.target.checked)}
                           />
                           <span style={{ marginLeft: 6, fontSize: 13 }}>BTINDIA</span>
-                        </div>
+                        </div> */}
                       </div>
                     </Form.Item>
                   </Col>
@@ -876,7 +904,7 @@ const EmployeeRegistration = ({
                 </Col>
               </Row>
             )}
-            
+
             <Row gutter={[16, 12]}>
               <Col xs={24} md={12}>
                 <Form.Item
@@ -893,18 +921,11 @@ const EmployeeRegistration = ({
                   name="employee_id"
                   rules={[{ required: true, message: 'Employee ID is required!' }]}
                 >
-                  <Input 
-                    size="large" 
-                    placeholder={manualEntry ? "Enter employee ID" : "Auto-filled from system"} 
-                    readOnly={!manualEntry}
-                  />
+                  <Input size="large" placeholder={manualEntry ? 'Enter employee ID' : 'Auto-filled from system'} readOnly={!manualEntry} />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
-                <Form.Item
-                  label={<Text strong>Email</Text>}
-                  name="email"
-                >
+                <Form.Item label={<Text strong>Email</Text>} name="email">
                   <Input size="large" placeholder="employee@company.com" />
                 </Form.Item>
               </Col>
@@ -921,18 +942,12 @@ const EmployeeRegistration = ({
           <div style={style}>
             <Row gutter={[16, 12]}>
               <Col xs={24} md={12}>
-                <Form.Item
-                  label={<Text strong>Department</Text>}
-                  name="department"
-                >
+                <Form.Item label={<Text strong>Department</Text>} name="department">
                   <Input size="large" placeholder="Enter department" />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
-                <Form.Item
-                  label={<Text strong>Position</Text>}
-                  name="position"
-                >
+                <Form.Item label={<Text strong>Position</Text>} name="position">
                   <Input size="large" placeholder="Enter job position" />
                 </Form.Item>
               </Col>
@@ -942,12 +957,7 @@ const EmployeeRegistration = ({
                   name="hire_date"
                   rules={[{ required: true, message: 'Please select hire date!' }]}
                 >
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    size="large"
-                    format="YYYY-MM-DD"
-                    placeholder="Select Hire Date"
-                  />
+                  <DatePicker style={{ width: '100%' }} size="large" format="YYYY-MM-DD" placeholder="Select Hire Date" />
                 </Form.Item>
               </Col>
             </Row>
@@ -958,10 +968,10 @@ const EmployeeRegistration = ({
           <div style={style}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <CameraOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 8 }} />
-              <Title level={4} style={{ marginBottom: 8 }}>Face Capture</Title>
-              <Text type="secondary">
-                Capture 3 images automatically - straight, right, and left views
-              </Text>
+              <Title level={4} style={{ marginBottom: 8 }}>
+                Face Capture
+              </Title>
+              <Text type="secondary">Capture 3 images automatically - straight, right, and left views</Text>
               {isVoiceEnabled && (
                 <div style={{ marginTop: 8 }}>
                   <SoundOutlined style={{ color: '#52c41a', marginRight: 4 }} />
@@ -1010,12 +1020,17 @@ const EmployeeRegistration = ({
 
             {photos.length > 0 && (
               <div>
-                <Text strong style={{ display: 'block', marginBottom: 12 }}>Captured Images:</Text>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: windowWidth <= 768 ? 'repeat(auto-fit, minmax(100px, 1fr))' : 'repeat(auto-fit, minmax(120px, 1fr))',
-                  gap: 12
-                }}>
+                <Text strong style={{ display: 'block', marginBottom: 12 }}>
+                  Captured Images:
+                </Text>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns:
+                      windowWidth <= 768 ? 'repeat(auto-fit, minmax(100px, 1fr))' : 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: 12
+                  }}
+                >
                   {photos.map((photo, index) => (
                     <div
                       key={index}
@@ -1059,10 +1074,13 @@ const EmployeeRegistration = ({
                           padding: 2
                         }}
                       >
-                        {faceAngles[index] ? 
-                          `${faceAngles[index].charAt(0).toUpperCase() + faceAngles[index].slice(1)} ✓` :
-                          (index === 0 ? 'Straight' : index === 1 ? 'Right' : 'Left')
-                        }
+                        {faceAngles[index]
+                          ? `${faceAngles[index].charAt(0).toUpperCase() + faceAngles[index].slice(1)} ✓`
+                          : index === 0
+                          ? 'Straight'
+                          : index === 1
+                          ? 'Right'
+                          : 'Left'}
                       </div>
                     </div>
                   ))}
@@ -1102,9 +1120,7 @@ const EmployeeRegistration = ({
             {existingData ? 'Edit Employee' : 'Register New Employee'}
           </Title>
           <Text type="secondary" style={{ fontSize: windowWidth <= 768 ? '14px' : '16px' }}>
-            {existingData
-              ? 'Update employee information'
-              : 'Complete the form to register a new employee'}
+            {existingData ? 'Update employee information' : 'Complete the form to register a new employee'}
           </Text>
         </div>
 
@@ -1125,28 +1141,20 @@ const EmployeeRegistration = ({
           {renderStepContent(1)}
           {renderStepContent(2)}
 
-          <div style={{
-            marginTop: 32,
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 12
-          }}>
-            <Button
-              size="large"
-              disabled={currentStep === 0}
-              onClick={() => handleStepChange('prev')}
-              style={{ flex: 1, maxWidth: 120 }}
-            >
+          <div
+            style={{
+              marginTop: 32,
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 12
+            }}
+          >
+            <Button size="large" disabled={currentStep === 0} onClick={() => handleStepChange('prev')} style={{ flex: 1, maxWidth: 120 }}>
               <ArrowLeftOutlined /> Previous
             </Button>
 
             {currentStep < 2 ? (
-              <Button
-                type="primary"
-                size="large"
-                onClick={() => handleStepChange('next')}
-                style={{ flex: 1, maxWidth: 120 }}
-              >
+              <Button type="primary" size="large" onClick={() => handleStepChange('next')} style={{ flex: 1, maxWidth: 120 }}>
                 Next <ArrowRightOutlined />
               </Button>
             ) : (
@@ -1209,9 +1217,7 @@ const EmployeeRegistration = ({
               textAlign: 'center'
             }}
           >
-            <Text style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>
-              {getInstructionText()}
-            </Text>
+            <Text style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>{getInstructionText()}</Text>
             {isVoiceEnabled && (
               <div style={{ marginTop: 4 }}>
                 <SoundOutlined style={{ color: '#52c41a', fontSize: '12px', marginRight: 4 }} />
@@ -1234,13 +1240,7 @@ const EmployeeRegistration = ({
               Cancel
             </Button>
             {!autoCaptureInterval && countdown === 0 && (
-              <Button
-                type="primary"
-                size="large"
-                icon={<CameraOutlined />}
-                onClick={capturePhoto}
-                disabled={captureInstruction === 'done'}
-              >
+              <Button type="primary" size="large" icon={<CameraOutlined />} onClick={capturePhoto} disabled={captureInstruction === 'done'}>
                 Manual Capture
               </Button>
             )}
