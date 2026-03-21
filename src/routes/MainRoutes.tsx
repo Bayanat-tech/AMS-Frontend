@@ -20,7 +20,7 @@ import VendorStatus from 'pages/VendorSystem/VendorStatus';
 import Loadable from 'components/Loadable';
 import CommonLayout from 'layout/CommonLayout';
 import MainLayout from 'layout/MainLayout';
-import AppSelectionPage from 'pages/AppSelection/AppSelectionPage';
+// ///////import AppSelectionPage from 'pages/AppSelection/AppSelectionPage';
 import AcTreeFinancePage from 'pages/Finance/AcTreeFinancePage';
 import EmployeeHrPage from 'pages/HR/Masters/Employee/EmployeeHrPage';
 //import ItemmasterPfPage from 'pages/Purchasefolder/ItemmasterPfpage';
@@ -55,17 +55,17 @@ import OutboundJobTabsWmsPage from 'pages/WMS/Transaction/outbound/OutboundJobMa
 import OutboundJobWmsPage from 'pages/WMS/Transaction/outbound/OutboundJobWmsPage';
 import WarehouseWmsPage from 'pages/WMS/WarehouseWmsPage';
 
-import PeriodWiseAccountsPage from 'pages/accounts/reports/ageing/PeriodWiseAccountsPage';
+//import PeriodWiseAccountsPage from 'pages/accounts/reports/ageing/PeriodWiseAccountsPage';
 import ProducttypeWmsPage from 'pages/WMS/ProducttypeWmsPage';
 import AlertWmsPage from 'pages/WMS/AlertWmsPage';
 import SectionPage from 'pages/HR/SectionPage';
-import ProfitAndLossPage from 'pages/accounts/reports/profitAndLoss/ProfitAndLossPage';
+//import ProfitAndLossPage from 'pages/accounts/reports/profitAndLoss/ProfitAndLossPage';
 import ActivityKpiWmsPage from 'pages/WMS/ActivityKpiWmsPage';
 import POcancelPfPage from 'pages/Purchasefolder/POcancelPfpage';
 import POmodifyPfPage from 'pages/Purchasefolder/POmodifyPfpage';
 import LocationtypeWmsPage from 'pages/WMS/LocationTypeWmsPage';
-import TransactionDocument from 'pages/accounts/transaction/TransactionDocument';
-import { transactionDocumentType } from 'utils/constants';
+//import TransactionDocument from 'pages/accounts/transaction/TransactionDocument';
+//import { transactionDocumentType } from 'utils/constants';
 import WmsDashboard from 'pages/dashboard/WmsDashboard';
 import CostControllerDashboard from 'pages/dashboard/CostControllerDashboard';
 import ProcDashboard from 'pages/dashboard/ProcDashboard';
@@ -146,14 +146,14 @@ import AttendancePage from 'pages/Attendance/AttendancePage';
 import AttendanceRequestPage from 'pages/Attendance/Request/AttendanceRequestPage';
 import AttendanceRequestsAdmin from 'pages/Attendance/Request/AttendanceRequestsAdmin';
 import KpiItemPage from 'pages/Pams/KpiItemPage';
-import InvoiceMasterPage from 'pages/Billing/InvoiceMasterPage';
+//import InvoiceMasterPage from 'pages/Billing/InvoiceMasterPage';
 import TestingPage from 'pages/Testing/TestingPage';
-import MytaskalmsPage from 'pages/ALMS/MytaskalmsPage';
-import SiteMasterPage from 'pages/WMS/SiteMasterPage';
-import MyMsPSItemMasterPage from 'pages/ALMS/MyMsPSItemMasterPage';
-import MsPSItemGroupPage from 'pages/ALMS/MsPSItemGroupPage';
-import MsPSRoleMasterPage from 'pages/ALMS/MsPSRoleMasterPage';
-import MsPSFlowMasterPage from 'pages/ALMS/MsPSFlowMasterPage';
+// import MytaskalmsPage from 'pages/ALMS/MytaskalmsPage';
+// import SiteMasterPage from 'pages/WMS/SiteMasterPage';
+// import MyMsPSItemMasterPage from 'pages/ALMS/MyMsPSItemMasterPage';
+// import MsPSItemGroupPage from 'pages/ALMS/MsPSItemGroupPage';
+// import MsPSRoleMasterPage from 'pages/ALMS/MsPSRoleMasterPage';
+// import MsPSFlowMasterPage from 'pages/ALMS/MsPSFlowMasterPage';
 import StockCountPage from 'pages/stock_count/create_count/StockCountPage';
 import InputActuallyMainPage from 'pages/stock_count/input_actually/InputActuallyMainPage';
 const MaintenanceError = Loadable(lazy(() => import('pages/maintenance/404')));
@@ -276,7 +276,7 @@ const MainRoutes = {
                     { path: 'assetgroup', element: <AssetGroupWmsPage /> }, // Asset group master page
                     { path: 'activitykpi', element: <ActivityKpiWmsPage /> }, // Activity KPI master page
                     { path: 'customer', element: <CustomerWmsPage /> },
-                    { path: 'Site', element: <SiteMasterPage /> }, // Site master page
+                    //{ path: 'Site', element: <SiteMasterPage /> }, // Site master page
                     { path: '*', element: <MaintenanceError /> } // 404 error page
                   ]
                 },
@@ -356,10 +356,10 @@ const MainRoutes = {
                     { path: 'stock_adj/view/:adj_no', element: <StockAdjustmentViewPage /> }
                   ]
                 },
-                {
-                  path: 'request',
-                  children: [{ path: 'invoice', element: <InvoiceMasterPage /> }]
-                },
+                // {
+                //   path: 'request',
+                //   children: [{ path: 'invoice', element: <InvoiceMasterPage /> }]
+                // },
                 {
                   path: '*',
                   element: <MaintenanceComingSoon /> // Coming soon page
@@ -419,10 +419,10 @@ const MainRoutes = {
             {
               path: 'activity',
               children: [
-                {
-                  path: 'request',
-                  children: [{ path: 'invoice_entry', element: <InvoiceMasterPage /> }]
-                },
+                // {
+                //   path: 'request',
+                //   children: [{ path: 'invoice_entry', element: <InvoiceMasterPage /> }]
+                // },
                 {
                   path: '*',
                   element: <MaintenanceComingSoon /> // Coming soon page
@@ -730,7 +730,7 @@ const MainRoutes = {
                     { path: 'grademaster', element: <GradeHrPage /> }, // Grade master page
                     { path: 'designation', element: <DesignationHrPage /> }, // Designation page
                     { path: 'formaldesignation', element: <FormaldesignationHrPage /> }, // Formal designation page
-                    { path: 'bank', element: <TransactionDocument doc_type="" /> } // Bank transaction document page
+                    //{ path: 'bank', element: <TransactionDocument doc_type="" /> } // Bank transaction document page
                   ]
                 },
                 {
@@ -788,35 +788,35 @@ const MainRoutes = {
                     { path: '*', element: <MaintenanceError /> } // 404 error page
                   ]
                 },
-                {
-                  path: 'transactions',
-                  children: [
-                    {
-                      path: 'cheque-payment',
-                      element: (
-                        <TransactionDocument
-                          doc_type={transactionDocumentType.CHEQUE_PAYMENT}
-                          key={transactionDocumentType.CHEQUE_PAYMENT}
-                        />
-                      ) // Cheque payment transaction document page
-                    },
-                    {
-                      path: 'cheque-receipt',
-                      element: (
-                        <TransactionDocument
-                          doc_type={transactionDocumentType.CHEQUE_RECEIPT}
-                          key={transactionDocumentType.CHEQUE_RECEIPT}
-                        />
-                      ) // Cheque receipt transaction document page
-                    },
-                    {
-                      path: 'cash-receipt',
-                      element: (
-                        <TransactionDocument doc_type={transactionDocumentType.CASH_RECEIPT} key={transactionDocumentType.CASH_RECEIPT} />
-                      ) // Cash receipt transaction document page
-                    }
-                  ]
-                },
+                // {
+                //   path: 'transactions',
+                //   children: [
+                //     {
+                //       path: 'cheque-payment',
+                //       element: (
+                //         <TransactionDocument
+                //           doc_type={transactionDocumentType.CHEQUE_PAYMENT}
+                //           key={transactionDocumentType.CHEQUE_PAYMENT}
+                //         />
+                //       ) // Cheque payment transaction document page
+                //     },
+                //     {
+                //       path: 'cheque-receipt',
+                //       element: (
+                //         <TransactionDocument
+                //           doc_type={transactionDocumentType.CHEQUE_RECEIPT}
+                //           key={transactionDocumentType.CHEQUE_RECEIPT}
+                //         />
+                //       ) // Cheque receipt transaction document page
+                //     },
+                //     {
+                //       path: 'cash-receipt',
+                //       element: (
+                //         <TransactionDocument doc_type={transactionDocumentType.CASH_RECEIPT} key={transactionDocumentType.CASH_RECEIPT} />
+                //       ) // Cash receipt transaction document page
+                //     }
+                //   ]
+                // },
                 {
                   path: 'inbound'
                 },
@@ -846,20 +846,20 @@ const MainRoutes = {
             {
               path: 'reports',
               children: [
-                {
-                  path: 'ageing',
-                  children: [
-                    { path: 'period-wise', element: <PeriodWiseAccountsPage /> },
-                    { path: '*', element: <MaintenanceError /> } // 404 error page
-                  ]
-                },
-                {
-                  path: 'profit-and-loss',
-                  children: [
-                    { path: 'profit-and-loss', element: <ProfitAndLossPage /> }, // Profit and loss report page
-                    { path: '*', element: <MaintenanceError /> } // 404 error page
-                  ]
-                },
+                // {
+                //   path: 'ageing',
+                //   children: [
+                //     { path: 'period-wise', element: <PeriodWiseAccountsPage /> },
+                //     { path: '*', element: <MaintenanceError /> } // 404 error page
+                //   ]
+                // },
+                // {
+                //   path: 'profit-and-loss',
+                //   children: [
+                //     { path: 'profit-and-loss', element: <ProfitAndLossPage /> }, // Profit and loss report page
+                //     { path: '*', element: <MaintenanceError /> } // 404 error page
+                //   ]
+                // },
                 {
                   path: '*',
                   element: <MaintenanceComingSoon /> // Coming soon page
@@ -936,36 +936,36 @@ const MainRoutes = {
           ]
         },
 
-        {
-          path: 'almswf',
-          children: [
-            {
-              path: 'masters',
-              children: [
-                {
-                  path: 'gm',
-                  children: [
-                    { path: 'item_group', element: <MsPSItemGroupPage /> },
-                    { path: 'item_master', element: <MyMsPSItemMasterPage /> },
-                    { path: 'role_master', element: <MsPSRoleMasterPage /> },
-                    { path: 'flow_master', element: <MsPSFlowMasterPage /> }
-                  ]
-                },
-                { path: '*', element: <MaintenanceComingSoon /> }
-              ]
-            },
+        // {
+        //   path: 'almswf',
+        //   children: [
+        //     {
+        //       path: 'masters',
+        //       children: [
+        //         {
+        //           path: 'gm',
+        //           children: [
+        //             { path: 'item_group', element: <MsPSItemGroupPage /> },
+        //             { path: 'item_master', element: <MyMsPSItemMasterPage /> },
+        //             { path: 'role_master', element: <MsPSRoleMasterPage /> },
+        //             { path: 'flow_master', element: <MsPSFlowMasterPage /> }
+        //           ]
+        //         },
+        //         { path: '*', element: <MaintenanceComingSoon /> }
+        //       ]
+        //     },
 
-            {
-              path: 'activity',
-              children: [
-                {
-                  path: 'request',
-                  children: [{ path: 'my_task', element: <MytaskalmsPage /> }]
-                }
-              ]
-            }
-          ]
-        },
+        //     {
+        //       path: 'activity',
+        //       children: [
+        //         {
+        //           path: 'request',
+        //           children: [{ path: 'my_task', element: <MytaskalmsPage /> }]
+        //         }
+        //       ]
+        //     }
+        //   ]
+        // },
 
         // {
         //   path: 'almswf',
