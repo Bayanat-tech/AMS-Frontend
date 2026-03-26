@@ -50,7 +50,7 @@ const animation: KeyedObject = {
 
 const Snackbar = () => {
   const snackbar = useSelector((state) => state.snackbar);
-  const { actionButton, alert, close, message, open, transition, variant } = snackbar;
+  const { actionButton, alert, close, message, open, transition, variant, duration } = snackbar;
 
   const handleClose = (event: SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -66,7 +66,7 @@ const Snackbar = () => {
         <MuiSnackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={open}
-          autoHideDuration={6000}
+          autoHideDuration={duration ?? 6000}
           onClose={handleClose}
           message={message}
           sx={{
@@ -100,10 +100,10 @@ const Snackbar = () => {
           TransitionComponent={animation[transition]}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={open}
-          autoHideDuration={6000}
+          autoHideDuration={duration ?? 6000}
           onClose={handleClose}
           sx={{
-             mt: 3,
+            mt: 3,
             // width: '80%', // Makes the snackbar cover the full parent width
             // maxWidth: '80vw', // Prevents overflow
             left: 0, // Ensures it touches the left edge

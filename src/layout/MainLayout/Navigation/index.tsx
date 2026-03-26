@@ -231,13 +231,13 @@ const Navigation = ({ onClose, isCollapsed, setIsCollapsed }: NavigationProps) =
               children: children.slice(4).map((eachMenuItem) => ({
                 ...eachMenuItem,
                 type: 'collapse',
-                title: eachMenuItem.title || 'Untitled' // Fallback for undefined titles.
+                title: eachMenuItem.title || 'Untitled'
               }))
             }
           ]
         : children.map((child) => ({
             ...child,
-            title: typeof child.title === 'string' ? child.title : 'Untitled' // Ensure title is a string
+            title: typeof child.title === 'string' ? child.title : 'Untitled'
           }));
 
     setMenuItems((itemsData as MenuItem[]) || []);
@@ -250,11 +250,11 @@ const Navigation = ({ onClose, isCollapsed, setIsCollapsed }: NavigationProps) =
         fontFamily: 'Inter, sans-serif',
         zIndex: 1000,
         backgroundColor: '#082a89',
-        // backgroundColor: 'red',
-
         color: '#fff',
-        marginTop: isMobile ? '0' : '40px',
-        position: isMobile ? 'static' : 'relative',
+        marginTop: isMobile ? '40px' : '0',
+        position: isMobile ? 'static' : 'fixed',
+        top: isMobile ? 'unset' : '40px',
+        left: isMobile ? 'unset' : '0',
         height: isMobile ? '100%' : 'calc(100vh - 40px)',
         paddingLeft: 2,
         paddingRight: 2

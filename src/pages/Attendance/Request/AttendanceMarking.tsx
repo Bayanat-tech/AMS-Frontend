@@ -262,12 +262,24 @@ const AttendanceMarking = () => {
   const [autoConfirmModal, setAutoConfirmModal] = useState(false);
   const [pendingAttendance, setPendingAttendance] = useState<any>(null);
   const [autoConfirmCountdown, setAutoConfirmCountdown] = useState<number>(AUTO_CONFIRM_SECONDS);
-  const [autoConfirmTimer, setAutoConfirmTimer] = useState<NodeJS.Timeout | null>(null);
+  const autoConfirmTimerRef = useRef<number | null>(null);
 
   const webcamRef = useRef<Webcam>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
   const successTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const successShownAtRef = useRef<number | null>(null);
+  const suppressSuccessUIRef = useRef<boolean>(false);
+
+  const closeSuccessImmediate = useCallback(() => {
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+      successTimerRef.current = null;
+    }
+    successShownAtRef.current = null;
+    setSuccessData(null);
+    setStatus('idle');
+  }, []);
 
   const getVideoConstraints = () => {
     const isMobile = window.innerWidth < 768;
@@ -288,10 +300,10 @@ const AttendanceMarking = () => {
     return () => {
       speechSynthRef.current?.cancel();
       if (countdownRef.current) clearTimeout(countdownRef.current);
-      if (autoConfirmTimer) clearInterval(autoConfirmTimer);
+      if (autoConfirmTimerRef.current) clearInterval(autoConfirmTimerRef.current);
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
     };
-  }, [autoConfirmTimer]);
+  }, []);
 
   const speak = useCallback(
     (text: string): Promise<void> => {
@@ -540,20 +552,24 @@ const AttendanceMarking = () => {
           setStatus('success');
           await speak(`${employeeName}. ${action === 'check-in' ? 'Check in' : 'Check out'} done successfully.`);
           if (successTimerRef.current) clearTimeout(successTimerRef.current);
-          successTimerRef.current = setTimeout(() => handleSuccessClose(), 4000);
+          suppressSuccessUIRef.current = true;
+          successTimerRef.current = window.setTimeout(() => {
+            suppressSuccessUIRef.current = false;
+            closeSuccessImmediate();
+          }, 1000) as unknown as NodeJS.Timeout;
         } else throw new Error(confirmResponse.message || 'Confirmation failed');
       } catch {
         message.error('Automatic confirmation failed');
         await speak('Confirmation failed. Please try again.');
       } finally {
-        if (autoConfirmTimer) {
-          clearInterval(autoConfirmTimer);
-          setAutoConfirmTimer(null);
+        if (autoConfirmTimerRef.current) {
+          clearInterval(autoConfirmTimerRef.current);
+          autoConfirmTimerRef.current = null;
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [autoConfirmTimer, speak, action]
+    [speak, action]
   );
 
   const handleAutoSubmit = useCallback(
@@ -585,10 +601,10 @@ const AttendanceMarking = () => {
             setAutoConfirmModal(true);
             const recognizedName = response.data?.recognized_employee?.name || 'Employee';
             await speak(`Recognized as ${recognizedName}. If this is not you, click cancel within 3 seconds.`);
-            const timer = setInterval(() => {
+            const timer = window.setInterval(() => {
               setAutoConfirmCountdown((prev) => {
                 if (prev <= 1) {
-                  clearInterval(timer);
+                  clearInterval(timer as unknown as number);
                   setAutoConfirmModal(false);
                   handleAutoConfirm(response.data || response);
                   return 0;
@@ -596,7 +612,7 @@ const AttendanceMarking = () => {
                 return prev - 1;
               });
             }, 1000);
-            setAutoConfirmTimer(timer);
+            autoConfirmTimerRef.current = timer as unknown as number;
           } else {
             const employeeName = response.recognized_employee?.name || response.employee_name;
             setSuccessData({
@@ -610,7 +626,12 @@ const AttendanceMarking = () => {
             setIsModalOpen(false);
             await speak(`${employeeName}. ${action === 'check-in' ? 'Check in' : 'Check out'} done successfully.`);
             if (successTimerRef.current) clearTimeout(successTimerRef.current);
-            successTimerRef.current = setTimeout(() => handleSuccessClose(), 4000);
+            // Suppress rendering of the success popup and close after 1s
+            suppressSuccessUIRef.current = true;
+            successTimerRef.current = window.setTimeout(() => {
+              suppressSuccessUIRef.current = false;
+              closeSuccessImmediate();
+            }, 1000) as unknown as NodeJS.Timeout;
           }
         } else {
           throw new Error(response.message || 'Attendance failed');
@@ -642,9 +663,9 @@ const AttendanceMarking = () => {
 
   const handleNotMe = useCallback(async () => {
     if (!pendingAttendance) return;
-    if (autoConfirmTimer) {
-      clearInterval(autoConfirmTimer);
-      setAutoConfirmTimer(null);
+    if (autoConfirmTimerRef.current) {
+      clearInterval(autoConfirmTimerRef.current);
+      autoConfirmTimerRef.current = null;
     }
     setAutoConfirmModal(false);
     message.info('Cancelling recognition...');
@@ -672,7 +693,7 @@ const AttendanceMarking = () => {
     setPendingAttendance(null);
     setStatus('idle');
     setAttempts(0);
-  }, [pendingAttendance, autoConfirmTimer, speak]);
+  }, [pendingAttendance, speak]);
 
   const handleActionClick = useCallback((selectedAction: 'check-in' | 'check-out') => {
     setAction(selectedAction);
@@ -701,10 +722,23 @@ const AttendanceMarking = () => {
   }, []);
 
   const handleSuccessClose = useCallback(() => {
+    const MIN_MS = 4000;
+    if (successShownAtRef.current) {
+      const elapsed = Date.now() - successShownAtRef.current;
+      if (elapsed < MIN_MS) {
+        const remaining = MIN_MS - elapsed;
+        if (successTimerRef.current) {
+          clearTimeout(successTimerRef.current);
+        }
+        successTimerRef.current = window.setTimeout(() => handleSuccessClose(), remaining) as unknown as NodeJS.Timeout;
+        return;
+      }
+    }
     if (successTimerRef.current) {
       clearTimeout(successTimerRef.current);
       successTimerRef.current = null;
     }
+    successShownAtRef.current = null;
     setSuccessData(null);
     setStatus('idle');
   }, []);
@@ -911,8 +945,13 @@ transition-all duration-200 lg:rounded-3xl py-4 px-2 sm:p-4 lg:p-8 flex flex-col
                     desc: 'Step-by-step voice'
                   }
                 ].map((f) => (
-                  <div key={f.title} className={`bg-gradient-to-br ${f.bg} rounded-lg lg:rounded-2xl p-2 sm:p-3 lg:p-6 border ${f.border} text-center`}>
-                    <div className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-gradient-to-br ${f.from} ${f.to} rounded-lg lg:rounded-xl flex items-center justify-center mx-auto mb-1 sm:mb-2 lg:mb-4`}>
+                  <div
+                    key={f.title}
+                    className={`bg-gradient-to-br ${f.bg} rounded-lg lg:rounded-2xl p-2 sm:p-3 lg:p-6 border ${f.border} text-center`}
+                  >
+                    <div
+                      className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-gradient-to-br ${f.from} ${f.to} rounded-lg lg:rounded-xl flex items-center justify-center mx-auto mb-1 sm:mb-2 lg:mb-4`}
+                    >
                       {f.icon}
                     </div>
                     <h4 className="font-bold text-gray-800 text-[10px] sm:text-xs lg:text-base mb-0.5 lg:mb-2">{f.title}</h4>
@@ -1098,7 +1137,7 @@ transition-all duration-200 lg:rounded-3xl py-4 px-2 sm:p-4 lg:p-8 flex flex-col
       )}
 
       {/* Success Popup */}
-      {successData && (
+      {successData && !suppressSuccessUIRef.current && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
             <div className="text-center">

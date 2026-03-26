@@ -18,6 +18,7 @@ const initialState: SnackbarProps = {
     variant: 'filled'
   },
   transition: 'Fade',
+  duration: 6000,
   close: true,
   actionButton: false,
   maxStack: 3,
@@ -32,7 +33,7 @@ const snackbar = createSlice({
   initialState,
   reducers: {
     openSnackbar(state, action) {
-      const { open, message, anchorOrigin, variant, alert, transition, close, actionButton } = action.payload;
+      const { open, message, anchorOrigin, variant, alert, transition, close, actionButton, duration } = action.payload;
 
       state.action = !state.action;
       state.open = open || initialState.open;
@@ -44,6 +45,7 @@ const snackbar = createSlice({
         variant: alert?.variant || initialState.alert.variant
       };
       state.transition = transition || initialState.transition;
+      state.duration = duration !== undefined ? duration : initialState.duration;
       state.close = close === false ? close : initialState.close;
       state.actionButton = actionButton || initialState.actionButton;
     },

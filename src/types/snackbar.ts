@@ -15,6 +15,7 @@ export interface SnackbarProps {
   variant: string;
   alert: AlertProps;
   transition: string;
+  duration?: number;
   close: boolean;
   actionButton: boolean;
   dense: boolean;

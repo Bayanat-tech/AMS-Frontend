@@ -7,8 +7,6 @@ import { useTheme } from '@mui/material/styles';
 
 // project import
 import Breadcrumbs from 'components/@extended/Breadcrumbs';
-// import Drawer from './Drawer';
-// import Footer from './Footer';
 import Header from './Header';
 import Navigation from './Navigation';
 import useConfig from 'hooks/useConfig';
@@ -56,9 +54,11 @@ const MainLayout = () => {
           <Box
             component="main"
             sx={{
-              width: 'calc(100% - 260px)',
+              marginLeft: { xs: 0, sm: 0, md: isCollapsed ? '80px' : '180px' }, // ✅ 0 on mobile
+              width: { xs: '100%', sm: '100%', md: isCollapsed ? 'calc(100% - 80px)' : 'calc(100% - 180px)' }, // ✅ full width on mobile
               flexGrow: 1,
-              p: { xs: 1, sm: 1 }
+              p: { xs: 1, sm: 1 },
+              transition: 'margin-left 0.2s ease'
             }}
           >
             <Toolbar />

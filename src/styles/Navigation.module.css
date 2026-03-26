@@ -1,17 +1,17 @@
 .sidebar {
-  /* background-color: #ffffff; */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  min-height: 100vh;
   width: 180px;
   transition: width 0.3s ease;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: sticky; /* ✅ keep this */
+  top: 0; /* ✅ keep this */
+  height: 100vh; /* ✅ keep this */
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
   padding: 0px;
   border-right: 1px solid #dee2e6;
+  min-height: unset; /* ✅ REMOVE min-height: 100vh — this is the culprit */
+  align-self: flex-start; /* ✅ ADD this — critical for sticky to work in flex */
 }
 
 .sidebar.collapsed {

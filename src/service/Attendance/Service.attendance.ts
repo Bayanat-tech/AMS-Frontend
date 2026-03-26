@@ -661,7 +661,8 @@ class AttendanceService {
             message: 'Attendance confirmed successfully!',
             variant: 'alert',
             alert: { color: 'success' },
-            close: true
+            close: true,
+            duration: 1000
           })
         );
         return response.data;
