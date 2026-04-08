@@ -1,10 +1,6 @@
 import React, { createContext, useEffect, useReducer } from 'react';
-
-// third-party
 import { Chance } from 'chance';
 import jwtDecode from 'jwt-decode';
-
-// reducer - state management
 import { LOGIN, LOGOUT } from 'store/reducers/actions';
 import authReducer from 'store/reducers/auth';
 
@@ -95,16 +91,31 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
     const init = async () => {
       try {
         const serviceToken = window.localStorage.getItem('serviceToken');
+        let tokenToUse = serviceToken;
+        // If no token or token expired, try refresh endpoint (cookie-based)
+        if (!serviceToken || !verifyToken(serviceToken)) {
+          try {
+            const apiBase = (process.env.REACT_APP_API_URL || '').replace(/\/+$/g, '');
+            const refreshUrl = apiBase ? `${apiBase}/api/auth/refresh` : '/api/auth/refresh';
+            const refreshRes = await (await import('axios')).default.post(refreshUrl, {}, { withCredentials: true });
+            tokenToUse = refreshRes?.data?.data?.token;
+            if (tokenToUse) {
+              window.localStorage.setItem('serviceToken', tokenToUse);
+            }
+          } catch (e) {
+            // refresh failed - ensure logged out
+            dispatch({ type: LOGOUT });
+            return;
+          }
+        }
 
-        if (serviceToken && verifyToken(serviceToken)) {
-          setSession(serviceToken);
-          // const permissionsResponse = await AuthServicesInstance.getPermissions();
-
+        if (tokenToUse) {
+          setSession(tokenToUse);
           const meData = await AuthServicesInstance.getMe();
 
           if (meData?.success) {
             const { user, permissions, user_permission, permissionBasedMenuTree } = meData?.data;
-            
+
             // Normalize user data from uppercase to lowercase
             const normalizedUser = normalizeUserData(user);
             ChangeDirection(normalizedUser.lang_pref ?? 'en');
@@ -119,7 +130,7 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
             }
 
             // Extract tenantId from JWT token
-            const decoded: KeyedObject = jwtDecode(serviceToken);
+            const decoded: KeyedObject = jwtDecode(tokenToUse);
             const tenantId = decoded.tenantId;
 
             // Add tenantId to user object
@@ -139,10 +150,6 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
               }
             });
           }
-        } else {
-          dispatch({
-            type: LOGOUT
-          });
         }
       } catch (err) {
         console.error(err);
@@ -157,10 +164,10 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post('/api/auth/login', { email, password });
+    const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
     const { token, tenantId } = response.data.data;
     setSession(token);
-    
+
     // Decode token to get tenantId if not provided directly
     let decodedTenantId = tenantId;
     if (!decodedTenantId) {
@@ -173,7 +180,7 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
 
     if (meData?.success) {
       const { user, permissions, user_permission, permissionBasedMenuTree } = meData?.data;
-      
+
       // Normalize user data from uppercase to lowercase
       const normalizedUser = normalizeUserData(user);
       ChangeDirection(normalizedUser.lang_pref ?? 'en');
@@ -184,7 +191,7 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
       } catch (e) {
         // ignore storage errors
       }
-      
+
       // Add tenantId to user object
       const userWithTenant = {
         ...normalizedUser,
@@ -235,6 +242,9 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
   const logout = () => {
     try {
       window.localStorage.removeItem('company_code');
+    } catch (e) {}
+    try {
+      axios.post('/api/auth/logout', {}, { withCredentials: true }).catch(() => {});
     } catch (e) {}
     setSession(null);
     dispatch({ type: LOGOUT });
