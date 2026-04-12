@@ -164,6 +164,14 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
+    // Save credentials for offline auto-recovery
+    try {
+      localStorage.setItem('saved_email', email);
+      localStorage.setItem('saved_password', btoa(password)); // base64 encode
+    } catch (e) {
+      // ignore storage errors
+    }
+
     const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
     const { token, tenantId } = response.data.data;
     setSession(token);

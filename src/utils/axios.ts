@@ -41,7 +41,16 @@ axiosServices.interceptors.response.use(
   (error) => {
     const originalRequest = error.config;
     const status = error?.response?.status;
-    // attempt refresh once
+    // Network error (no internet) — don't logout, show offline screen
+    if (!error.response) {
+      try {
+        window.localStorage.setItem('connection_lost', 'true');
+      } catch (e) {}
+      window.dispatchEvent(new Event('connection_lost'));
+      return Promise.reject('Network unavailable');
+    }
+
+    // attempt refresh once on 401
     if (status === 401 && !originalRequest?._retry && !window.location.href.includes('/login')) {
       originalRequest._retry = true;
       return rawAxios
@@ -60,6 +69,14 @@ axiosServices.interceptors.response.use(
           return Promise.reject((error.response && error.response.data) || 'Wrong Services');
         })
         .catch((e) => {
+          // Network error during refresh — don't logout, notify offline
+          if (!e.response) {
+            try {
+              window.localStorage.setItem('connection_lost', 'true');
+            } catch (err) {}
+            window.dispatchEvent(new Event('connection_lost'));
+            return Promise.reject('Network unavailable');
+          }
           window.location.pathname = '/login';
           return Promise.reject((e.response && e.response.data) || e);
         });
