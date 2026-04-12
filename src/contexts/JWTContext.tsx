@@ -12,7 +12,6 @@ import { default as axios } from 'utils/axios';
 import AuthServicesInstance from 'service/service.auth';
 import useConfig from 'hooks/useConfig';
 import { ThemeDirection } from 'types/config';
-// import { I18n } from 'types/config';
 
 const chance = new Chance();
 
@@ -25,8 +24,6 @@ const initialState: AuthProps = {
   permissions: {},
   permissionBasedMenuTree: []
 };
-
-//----for change lang------
 
 const verifyToken: (st: string) => boolean = (serviceToken) => {
   if (!serviceToken) {
@@ -46,7 +43,6 @@ const setSession = (serviceToken?: string | null) => {
   }
 };
 
-// Normalize user data from API (convert uppercase to lowercase field names)
 const normalizeUserData = (user: any): UserProfile => {
   return {
     company_code: user.COMPANY_CODE || user.company_code || '',
@@ -87,11 +83,66 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
     onChangeDirection(ThemeDirection.LTR);
   };
 
+  // ✅ login defined BEFORE useEffect so it can be called inside init()
+  const login = async (email: string, password: string) => {
+    // Save credentials for offline auto-recovery
+    try {
+      localStorage.setItem('saved_email', email);
+      localStorage.setItem('saved_password', btoa(password)); // base64 encode
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
+    const { token, tenantId } = response.data.data;
+    setSession(token);
+
+    // Decode token to get tenantId if not provided directly
+    let decodedTenantId = tenantId;
+    if (!decodedTenantId) {
+      const decoded: KeyedObject = jwtDecode(token);
+      decodedTenantId = decoded.tenantId;
+    }
+
+    const meData = await AuthServicesInstance.getMe();
+
+    if (meData?.success) {
+      const { user, permissions, user_permission, permissionBasedMenuTree } = meData?.data;
+
+      const normalizedUser = normalizeUserData(user);
+      ChangeDirection(normalizedUser.lang_pref ?? 'en');
+      try {
+        if (normalizedUser.company_code) {
+          window.localStorage.setItem('company_code', normalizedUser.company_code);
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
+
+      const userWithTenant = {
+        ...normalizedUser,
+        tenantId: decodedTenantId
+      } as UserProfile;
+
+      dispatch({
+        type: LOGIN,
+        payload: {
+          isLoggedIn: true,
+          user: userWithTenant,
+          permissions,
+          user_permission,
+          permissionBasedMenuTree
+        }
+      });
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       try {
         const serviceToken = window.localStorage.getItem('serviceToken');
         let tokenToUse = serviceToken;
+
         // If no token or token expired, try refresh endpoint (cookie-based)
         if (!serviceToken || !verifyToken(serviceToken)) {
           try {
@@ -102,8 +153,24 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
             if (tokenToUse) {
               window.localStorage.setItem('serviceToken', tokenToUse);
             }
-          } catch (e) {
-            // refresh failed - ensure logged out
+          } catch (e: any) {
+            // Refresh failed — try saved credentials before logging out
+            const savedEmail = localStorage.getItem('saved_email');
+            const savedPasswordEncoded = localStorage.getItem('saved_password');
+
+            if (savedEmail && savedPasswordEncoded) {
+              try {
+                const savedPassword = atob(savedPasswordEncoded);
+                await login(savedEmail, savedPassword); // ✅ works now — login is defined above
+                return; // success — stay logged in
+              } catch (loginErr: any) {
+                // Network error — show offline screen, don't logout
+                if (!loginErr?.response) {
+                  window.localStorage.setItem('connection_lost', 'true');
+                }
+              }
+            }
+
             dispatch({ type: LOGOUT });
             return;
           }
@@ -116,11 +183,9 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
           if (meData?.success) {
             const { user, permissions, user_permission, permissionBasedMenuTree } = meData?.data;
 
-            // Normalize user data from uppercase to lowercase
             const normalizedUser = normalizeUserData(user);
             ChangeDirection(normalizedUser.lang_pref ?? 'en');
 
-            // Persist company_code so axios and other services can send it automatically
             try {
               if (normalizedUser.company_code) {
                 window.localStorage.setItem('company_code', normalizedUser.company_code);
@@ -129,11 +194,9 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
               // ignore storage errors
             }
 
-            // Extract tenantId from JWT token
             const decoded: KeyedObject = jwtDecode(tokenToUse);
             const tenantId = decoded.tenantId;
 
-            // Add tenantId to user object
             const userWithTenant = {
               ...normalizedUser,
               tenantId: tenantId
@@ -163,64 +226,7 @@ export const JWTProvider = ({ children }: { children: React.ReactElement }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // Save credentials for offline auto-recovery
-    try {
-      localStorage.setItem('saved_email', email);
-      localStorage.setItem('saved_password', btoa(password)); // base64 encode
-    } catch (e) {
-      // ignore storage errors
-    }
-
-    const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
-    const { token, tenantId } = response.data.data;
-    setSession(token);
-
-    // Decode token to get tenantId if not provided directly
-    let decodedTenantId = tenantId;
-    if (!decodedTenantId) {
-      const decoded: KeyedObject = jwtDecode(token);
-      decodedTenantId = decoded.tenantId;
-    }
-
-    // const permissionsResponse = await AuthServicesInstance.getPermissions();
-    const meData = await AuthServicesInstance.getMe();
-
-    if (meData?.success) {
-      const { user, permissions, user_permission, permissionBasedMenuTree } = meData?.data;
-
-      // Normalize user data from uppercase to lowercase
-      const normalizedUser = normalizeUserData(user);
-      ChangeDirection(normalizedUser.lang_pref ?? 'en');
-      try {
-        if (normalizedUser.company_code) {
-          window.localStorage.setItem('company_code', normalizedUser.company_code);
-        }
-      } catch (e) {
-        // ignore storage errors
-      }
-
-      // Add tenantId to user object
-      const userWithTenant = {
-        ...normalizedUser,
-        tenantId: decodedTenantId
-      } as UserProfile;
-
-      dispatch({
-        type: LOGIN,
-        payload: {
-          isLoggedIn: true,
-          user: userWithTenant,
-          permissions,
-          user_permission,
-          permissionBasedMenuTree
-        }
-      });
-    }
-  };
-
   const register = async (email: string, password: string, firstName: string, lastName: string) => {
-    // todo: this flow need to be recode as it not verified
     const id = chance.bb_pin();
     const response = await axios.post('/api/register', {
       id,
